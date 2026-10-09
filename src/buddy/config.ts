@@ -15,8 +15,9 @@ export const VOICES = ['Puck', 'Zephyr', 'Kore', 'Aoede', 'Leda', 'Charon', 'Fen
 /** shown in Profile as hints; the model name changes often, so it is editable there */
 export const MODEL_HINTS = ['gemini-3.1-flash-live-preview', 'gemini-2.5-flash-native-audio-preview-12-2025'];
 
-export const CHAR_W = 105;
-export const CHAR_H = 133;
+/** the video-call window (3:4) */
+export const CHAR_W = 150;
+export const CHAR_H = 200;
 /** default spot: clearly above the "continue" bar */
 export const POS_RIGHT = 12;
 export const POS_BOTTOM = 164;

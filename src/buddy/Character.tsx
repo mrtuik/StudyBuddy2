@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRMLoaderPlugin, VRMUtils, type VRM } from '@pixiv/three-vrm';
@@ -24,6 +24,7 @@ const bell = (p: number) => Math.sin(Math.PI * Math.min(1, Math.max(0, p)));
 /** the 3D character: a VRM model (blendshapes for blink, lips and emotions; arms posed by code) */
 export default function Character({ getLevel }: { getLevel: () => number }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'failed'>('loading');
   const play = useRef<(n: string) => void>(() => undefined);
   const gesture = useBuddy((s) => s.gesture);
   const lvl = useRef(getLevel);
@@ -45,14 +46,16 @@ export default function Character({ getLevel }: { getLevel: () => number }) {
     const rim = new THREE.DirectionalLight(0xb9a7ff, 1.4);
     rim.position.set(-1.5, 1.8, -2);
     scene.add(rim);
-    // bust shot: head and shoulders fill the little window
-    const camera = new THREE.PerspectiveCamera(28, CHAR_W / CHAR_H, 0.1, 20);
-    camera.position.set(0, 1.28, 2.0);
-    camera.lookAt(0, 1.26, 0);
+    // video-call framing: the camera is placed after the model loads so that head -> waist fills the frame
+    const FOV = 28;
+    const camera = new THREE.PerspectiveCamera(FOV, CHAR_W / CHAR_H, 0.1, 20);
+    camera.position.set(0, 1.2, 1.9);
+    camera.lookAt(0, 1.2, 0);
     const root = new THREE.Group();
     scene.add(root);
 
     let vrm: VRM | undefined;
+    let hipsRestY = 0;
     let flip = 1;
     let raf = 0, last = 0, t = 0, alive = true;
     let nextBlink = 2, blinkT = -1;
@@ -72,9 +75,28 @@ export default function Character({ getLevel }: { getLevel: () => number }) {
       v.scene.traverse((o) => { o.frustumCulled = false; });
       root.add(v.scene);
       vrm = v;
+
+      // ---- frame the shot from the real bone positions: top of head down to the waist
+      v.scene.updateMatrixWorld(true);
+      const wy = (n: string) => { const o = v.humanoid.getNormalizedBoneNode(n as never); const p = new THREE.Vector3(); o?.getWorldPosition(p); return p.y; };
+      const hipsY = wy('hips'), spineY = wy('spine') || hipsY + 0.1, headY = wy('head');
+      hipsRestY = v.humanoid.getNormalizedBoneNode('hips')?.position.y ?? 0;
+      if (headY > hipsY) {
+        const top = headY + 0.5 * (headY - hipsY);              // crown of the head (hair included)
+        const bottom = spineY - 0.04;                            // just below the belly
+        const pad = 0.1 * (top - bottom);
+        const hView = top - bottom + pad * 2;                    // height the frame must show
+        const wView = 0.6;                                       // arms hang at the sides: need about 60 cm of width
+        const tan = Math.tan((FOV / 2) * Math.PI / 180);
+        const dist = Math.max(hView / 2 / tan, wView / 2 / (tan * (CHAR_W / CHAR_H)));
+        const cy = (top + bottom) / 2 + 0.02;
+        camera.position.set(0, cy, dist);
+        camera.lookAt(0, cy, 0);
+      }
+      setState('ready');
       flip = v.meta?.metaVersion === '0' ? -1 : 1;
       root.rotation.y = -0.15;
-    });
+    }, undefined, () => { if (alive) setState('failed'); });
 
     const bone = (n: string) => vrm?.humanoid.getNormalizedBoneNode(n as never) ?? null;
 
@@ -111,7 +133,7 @@ export default function Character({ getLevel }: { getLevel: () => number }) {
       set(spine, 0, 0, 0);
       set(neck, 0, 0, 0);
       set(head, 0, Math.sin(t * 0.5) * 0.04, 0);
-      if (hips) hips.position.y = 0;
+      if (hips) hips.position.y = hipsRestY;      // keep the body at its standing height (0 would sink it below the camera)
       root.position.y = 0;
       root.rotation.z = 0;
 
@@ -202,5 +224,14 @@ export default function Character({ getLevel }: { getLevel: () => number }) {
     };
   }, []);
 
-  return <canvas ref={canvas} className="block h-full w-full" style={{ width: CHAR_W, height: CHAR_H, background: 'radial-gradient(ellipse at 50% 55%, rgba(167,139,250,.38) 0%, rgba(167,139,250,.14) 55%, rgba(167,139,250,0) 75%)' }} />;
+  return (
+    <div className="relative" style={{ width: CHAR_W, height: CHAR_H, background: 'radial-gradient(ellipse at 50% 38%, rgba(167,139,250,.30) 0%, rgba(167,139,250,.08) 55%, rgba(0,0,0,0) 80%), linear-gradient(165deg, #261c46 0%, #151230 55%, #0c0a1a 100%)' }}>
+      <canvas ref={canvas} className="block" style={{ width: CHAR_W, height: CHAR_H }} />
+      {state !== 'ready' && (
+        <div className="absolute inset-0 flex items-center justify-center px-3 text-center text-[11px] font-semibold text-white/70">
+          {state === 'loading' ? 'Loading Buddy…' : 'Could not load the character'}
+        </div>
+      )}
+    </div>
+  );
 }

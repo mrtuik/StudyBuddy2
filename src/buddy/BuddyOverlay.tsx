@@ -85,31 +85,40 @@ export default function BuddyOverlay() {
       }}
     >
       {b.caption && (
-        <div className="absolute bottom-full right-0 mb-1 max-w-[230px] rounded-2xl rounded-br-sm bg-white/95 px-3 py-2 text-[12.5px] font-medium leading-snug text-black shadow-lg" style={{ width: 'max-content' }}>
+        <div className="absolute bottom-full right-0 mb-1.5 rounded-2xl rounded-br-sm bg-white/95 px-3 py-2 text-[12.5px] font-medium leading-snug text-black shadow-lg" style={{ width: 'max-content', maxWidth: 'min(250px, calc(100vw - 24px))' }}>
           {b.caption}
         </div>
       )}
-      <Suspense fallback={null}><Character getLevel={buddyLevel} /></Suspense>
-      {b.watching && !b.peek && (
-        <div className="pointer-events-none absolute left-0 top-0 flex items-center gap-1 rounded-full bg-black/70 px-1.5 py-0.5 text-[10px] font-semibold text-green-400" aria-label="Buddy is watching your screen">
-          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-green-400" /><Eye size={11} />
-        </div>
-      )}
-      {b.status === 'connecting' && <div className="absolute inset-x-0 top-1/2 text-center text-[11px] font-semibold text-white/80">Waking up…</div>}
-      {ctl && !b.peek && (
-        <div className="absolute -bottom-9 right-0 flex gap-1.5" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-          <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-8 w-8 items-center justify-center rounded-full bg-card ring-1 ring-white/15" aria-label="Mute">
-            {b.muted ? <MicOff size={17} className="text-red-400" /> : <Mic size={17} />}
-          </button>
-          {screenCaptureAvailable() && (
-            <button onClick={toggleWatch} className="press flex h-8 w-8 items-center justify-center rounded-full bg-card ring-1 ring-white/15" aria-label="Watch my screen">
-              {b.watching ? <Eye size={16} className="text-green-400" /> : <EyeOff size={16} />}
+      {/* video-call window: the character is framed head to waist inside */}
+      <div className="relative h-full w-full overflow-hidden rounded-2xl border border-white/20 bg-black shadow-xl shadow-black/60">
+        <Suspense fallback={null}><Character getLevel={buddyLevel} /></Suspense>
+        {b.status === 'live' && (
+          <div className="pointer-events-none absolute left-2 top-2 flex items-center gap-1 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-bold text-white">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />LIVE
+          </div>
+        )}
+        {b.watching && !b.peek && (
+          <div className="pointer-events-none absolute right-2 top-2 flex items-center gap-1 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-green-400" aria-label="Buddy is watching your screen">
+            <Eye size={11} />
+          </div>
+        )}
+        {b.status === 'connecting' && <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold text-white/80">Waking up…</div>}
+        {!ctl && <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white">Buddy</div>}
+        {ctl && !b.peek && (
+          <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1.5 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+            <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur" aria-label="Mute">
+              {b.muted ? <MicOff size={16} className="text-red-400" /> : <Mic size={16} />}
             </button>
-          )}
-          <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-8 w-8 items-center justify-center rounded-full bg-card ring-1 ring-white/15" aria-label="Move aside"><ChevronsRight size={18} /></button>
-          <button onClick={() => buddyStop()} className="press flex h-8 w-8 items-center justify-center rounded-full bg-card ring-1 ring-white/15" aria-label="End"><Power size={17} className="text-red-400" /></button>
-        </div>
-      )}
+            {screenCaptureAvailable() && (
+              <button onClick={toggleWatch} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur" aria-label="Watch my screen">
+                {b.watching ? <Eye size={15} className="text-green-400" /> : <EyeOff size={15} />}
+              </button>
+            )}
+            <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur" aria-label="Move aside"><ChevronsRight size={17} /></button>
+            <button onClick={() => buddyStop()} className="press flex h-8 w-8 items-center justify-center rounded-full bg-red-600" aria-label="End"><Power size={16} /></button>
+          </div>
+        )}
+      </div>
     </div>
   );
 
