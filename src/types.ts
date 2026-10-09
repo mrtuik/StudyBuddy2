@@ -65,6 +65,7 @@ export type Item =
   | { kind: 'course'; id: MsgId; date: number; title: string; description?: string; hasCover: boolean }
   | { kind: 'notice'; id: MsgId; date: number; title: string; body: string }
   | { kind: 'login'; id: MsgId; date: number; user: string; pass: string }
+  | { kind: 'key'; id: MsgId; date: number; key: string }
   | { kind: 'cover'; id: MsgId; date: number; replyTo: MsgId };
 
 /** one #playlist post and what the app made of it (shown in Admin > Playlist) */

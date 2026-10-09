@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { ChevronsRight, Eye, EyeOff, KeyRound, Mic, MicOff, Power, X } from 'lucide-react';
 import { useBuddy, type Gender } from '../store/buddy';
 import { buddyLevel, buddyStart, buddyStop, buddyWatch } from './engine';
@@ -12,7 +12,6 @@ import { Chip } from '../components/ui';
 const Character = lazy(() => import('./Character'));      // three.js is loaded only when Buddy is first used
 
 export default function BuddyOverlay() {
-  const nav = useNavigate();
   const { pathname } = useLocation();
   const b = useBuddy();
   const [ctl, setCtl] = useState(false);
@@ -123,12 +122,12 @@ export default function BuddyOverlay() {
           {b.micBlocked && <button onClick={() => void openMicSettings()} className="press mt-2 block w-full rounded-lg bg-accent py-1.5 text-white">Open settings</button>}
         </div>
       )}
-      {b.sheet && <Sheet onClose={() => b.set({ sheet: false })} onProfile={() => { b.set({ sheet: false }); nav('/about'); }} />}
+      {b.sheet && <Sheet onClose={() => b.set({ sheet: false })} />}
     </>
   );
 }
 
-function Sheet({ onClose, onProfile }: { onClose: () => void; onProfile: () => void }) {
+function Sheet({ onClose }: { onClose: () => void }) {
   const b = useBuddy();
   const [name, setName] = useState(b.name);
   const [gender, setGender] = useState<Gender | ''>(b.gender);
@@ -136,7 +135,7 @@ function Sheet({ onClose, onProfile }: { onClose: () => void; onProfile: () => v
   const [lang, setLang] = useState(b.lang);
   const hasKey = !!b.apiKey.trim();
   const ageN = Number(age);
-  const missing = [!name.trim() && 'name', !gender && 'gender', !(ageN >= 5 && ageN <= 99) && 'age', !hasKey && 'API key'].filter(Boolean) as string[];
+  const missing = [!name.trim() && 'name', !gender && 'gender', !(ageN >= 5 && ageN <= 99) && 'age', !hasKey && 'Gemini key'].filter(Boolean) as string[];
   const ok = missing.length === 0;
 
   const go = () => {
@@ -171,10 +170,10 @@ function Sheet({ onClose, onProfile }: { onClose: () => void; onProfile: () => v
         </div>
 
         {!hasKey && (
-          <button onClick={onProfile} className="press mt-5 flex w-full items-center gap-3 rounded-xl border border-white/15 bg-chip p-3 text-left text-sm">
+          <div className="mt-5 flex w-full items-center gap-3 rounded-xl border border-white/15 bg-chip p-3 text-left text-sm">
             <KeyRound size={20} className="shrink-0 text-tint" />
-            <span>Add your <b>Gemini API key</b> in Profile first. Tap here to open Profile.</span>
-          </button>
+            <span>No Gemini key yet. Post <b>#key</b> and your key in your Telegram channel, then reopen the app.</span>
+          </div>
         )}
         <button onClick={go} disabled={!ok} className="press mt-5 w-full rounded-2xl bg-accent py-4 text-base font-bold disabled:opacity-40">Start talking</button>
         {!ok && <p className="mt-2 text-center text-xs text-red-400">Still needed: {missing.join(', ')}</p>}

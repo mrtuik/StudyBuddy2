@@ -98,7 +98,7 @@ export async function buddyStart() {
       mic?.stop(); speaker?.close(); sess = undefined; mic = undefined; speaker = undefined;
       useBuddy.getState().set({
         status: error ? 'error' : 'off',
-        caption: error ? (key ? 'Gemini rejected the API key. Check it in Profile.' : bad ? 'This Gemini model is not available. Change the model in Profile.' : reason || 'Connection lost. Tap to try again.') : '',
+        caption: error ? (key ? 'Gemini rejected the API key. Check the #key post in your channel.' : bad ? 'This Gemini model is not available. Change the model in Profile.' : reason || 'Connection lost. Tap to try again.') : '',
       });
     },
     onAudio: (d) => speaker?.play(d),
@@ -137,6 +137,6 @@ export async function buddyStart() {
       hello: `The session just started. Greet ${s.name} now, in ${langName(s.lang)}.`,
     });
   } catch (e) {
-    fail(/key|403|401|permission/i.test(String(e)) ? 'Gemini rejected the API key. Check it in Profile.' : `Could not connect: ${String((e as Error)?.message ?? e).slice(0, 120)}`);
+    fail(/key|403|401|permission/i.test(String(e)) ? 'Gemini rejected the API key. Check the #key post in your channel.' : `Could not connect: ${String((e as Error)?.message ?? e).slice(0, 120)}`);
   }
 }

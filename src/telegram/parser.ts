@@ -28,12 +28,25 @@ export function parseLogin(text: string): { user: string; pass: string } | null 
   return { user: parts[0], pass: parts[1] };
 }
 
+/**
+ * Gemini API key post in the channel:  `#key AIzaSy...`  (or `#key` and the key on the next line).
+ * The newest #key post is the one the app uses.
+ */
+export function parseKey(text: string): string | null {
+  const t = text.trim();
+  if (!/^#key(\s|$)/i.test(t)) return null;
+  const k = t.replace(/^#key/i, '').trim().split(/\s+/)[0]?.replace(/^["'`]+|["'`]+$/g, '') ?? '';
+  return k.length >= 20 ? k : null;
+}
+
 /** Convert one Telegram message to a catalog Item. Returns null for invalid/unrelated messages. */
 export function messageToItem(m: Api.Message): Item | null {
   const id = m.id;
   const date = (m.date ?? 0) * 1000;
   const lg = parseLogin(m.message ?? '');
   if (lg) return { kind: 'login', id, date, user: lg.user, pass: lg.pass };
+  const ky = parseKey(m.message ?? '');
+  if (ky) return { kind: 'key', id, date, key: ky };
   const p = parseCaption(m.message ?? '');
 
   if (!p) {

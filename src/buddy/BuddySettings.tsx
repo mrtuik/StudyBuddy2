@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Check, ChevronDown, KeyRound, Trash2 } from 'lucide-react';
 import VoiceAiIcon from './VoiceAiIcon';
 import { useBuddyMemory } from '../store/buddyMemory';
 import { useBuddy, DEFAULT_MODEL, type Gender } from '../store/buddy';
@@ -9,29 +9,19 @@ import { Chip } from '../components/ui';
 /** Profile > Buddy: Gemini API key and the student's details */
 export default function BuddySettings() {
   const b = useBuddy();
-  const [show, setShow] = useState(false);
-  const [test, setTest] = useState<string>();
   const mem = useBuddyMemory();
   const [many, setMany] = useState(30);
-  const ready = b.setup && !!b.apiKey.trim() && !!b.name.trim() && !!b.gender && b.age >= 5;
+  const ready = b.setup && !!b.name.trim() && !!b.gender && b.age >= 5;
   const [open, setOpen] = useState(!ready);          // set up already -> collapsed
   const [memOpen, setMemOpen] = useState(false);
   const [saved, setSaved] = useState(false);
-  const missing = [!b.apiKey.trim() && 'API key', !b.name.trim() && 'name', !b.gender && 'gender', !(b.age >= 5 && b.age <= 99) && 'age'].filter(Boolean) as string[];
+  const missing = [!b.name.trim() && 'name', !b.gender && 'gender', !(b.age >= 5 && b.age <= 99) && 'age'].filter(Boolean) as string[];
 
   const done = () => {
     if (missing.length) return;
     b.update({ setup: true });
     setOpen(false); setMemOpen(false); setSaved(true);
     setTimeout(() => setSaved(false), 2500);
-  };
-
-  const check = async () => {
-    setTest('Checking…');
-    try {
-      const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?pageSize=1&key=${encodeURIComponent(b.apiKey.trim())}`);
-      setTest(r.ok ? 'Key works ✓' : r.status === 400 || r.status === 403 ? 'Key rejected ✗' : `Error ${r.status}`);
-    } catch { setTest('No internet?'); }
   };
 
   const lab = 'mt-4 block text-xs font-semibold text-sub';
@@ -46,7 +36,7 @@ export default function BuddySettings() {
             <div className="font-bold leading-tight">{ready ? (b.name.trim() || 'Buddy') : 'Setup Your Profile'}</div>
             <div className="truncate text-xs text-sub">
               {saved ? <span className="inline-flex items-center gap-1 text-green-400"><Check size={13} /> Saved</span>
-                : ready ? `${LANGS.find((l) => l.code === b.lang)?.label ?? ''} · Roast ${b.roast}/5 · tap to edit` : 'Add API key and your details'}
+                : ready ? `${LANGS.find((l) => l.code === b.lang)?.label ?? ''} · Roast ${b.roast}/5 · tap to edit` : 'Add your details'}
             </div>
           </div>
           <ChevronDown size={20} className={`shrink-0 text-sub transition-transform duration-300 ${open ? 'rotate-180' : ''}`} />
@@ -55,19 +45,14 @@ export default function BuddySettings() {
         <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
           <div className="min-h-0 overflow-hidden" aria-hidden={!open}>
             <div className="border-t border-white/10 px-4 pb-4 pt-4">
-        <label className="block text-xs font-semibold text-sub">Gemini API key</label>
-        <div className="mt-1 flex gap-2">
-          <input type={show ? 'text' : 'password'} value={b.apiKey} onChange={(e) => { b.update({ apiKey: e.target.value }); setTest(undefined); }}
-            placeholder="Paste key from aistudio.google.com/apikey" autoCapitalize="none" autoCorrect="off" spellCheck={false}
-            className="min-w-0 flex-1 rounded-xl bg-chip px-4 py-3 text-[15px] outline-none" />
-          <button onClick={() => setShow(!show)} className="press rounded-xl bg-chip px-3" aria-label="Show key">{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+        <div className="flex items-start gap-3 rounded-xl bg-chip p-3 text-sm">
+          <KeyRound size={18} className={`mt-0.5 shrink-0 ${b.apiKey.trim() ? 'text-green-400' : 'text-sub'}`} />
+          <span className="min-w-0 flex-1">
+            {b.apiKey.trim()
+              ? <>Gemini key found in your channel <span className="text-green-400">✓</span></>
+              : <>No Gemini key yet. Post <b>#key</b> and your key in your Telegram channel, then pull to refresh.</>}
+          </span>
         </div>
-        <div className="mt-2 flex items-center gap-2">
-          <button onClick={check} disabled={!b.apiKey.trim()} className="press rounded-lg bg-accent px-4 py-2 text-sm font-bold disabled:opacity-40">Test key</button>
-          {b.apiKey && <button onClick={() => { b.update({ apiKey: '' }); setTest(undefined); }} className="press rounded-lg bg-chip px-4 py-2 text-sm font-semibold">Remove</button>}
-          {test && <span className="text-sm text-sub">{test}</span>}
-        </div>
-        <p className="mt-2 text-[11px] text-sub">Saved only on this phone. It is used only to talk to Google Gemini.</p>
 
         <label className={lab}>Name</label>
         <input value={b.name} onChange={(e) => b.update({ name: e.target.value })} className={inp} />

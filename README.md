@@ -83,3 +83,6 @@ Send ONE text message in the channel:
 - V6.9.8: **one playlist in several chapters**: add a range part, e.g. `#playlist DMLT 1ST YR | MICROBIOLOGY | General | 1-10 | link` and `... | Staining | 11-20 | link` (`21-` = from video 21 to the end). A video is shown only once, so a second post with the same link and no range gets nothing. Player: chapter list shows thumbnails with the full wrapped title; YouTube's own fullscreen button is off and the app's fullscreen button (top left) rotates the phone to landscape.
 - V6.9.9: the same playlist can be posted into several chapters without a range (each `#playlist` post is independent). A video is only skipped when that chapter already has it. The range part (`1-10`) is optional and only for splitting one playlist.
 - V6.9.10: Admin > Playlist shows every `#playlist` post with how many videos were read and shown, and a "Read again" button that forces a fresh download of all playlists (and shows the error if one fails).
+
+## Gemini API key (Buddy)
+The key is not typed in the app. Post it in the private channel: `#key AIzaSy...` (newest `#key` post wins; delete the post to remove the key). The app picks it up on the next sync.

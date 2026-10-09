@@ -3,6 +3,7 @@ import { getAllItems, getMeta, setMeta } from '../db/idb';
 import { syncCatalog } from '../telegram/scanner';
 import { readPlaylists, refreshPlaylists, type PlCache } from '../lib/playlistStore';
 import { guessCourseSubject, guessRows } from '../lib/playlistGuess';
+import { useBuddy } from './buddy';
 import { plLessonId, type PlaylistInfo, type Book, type Course, type Item, type Notice, type Subject, type Chapter } from '../types';
 
 const slug = (s: string) =>
@@ -89,6 +90,12 @@ export function buildCatalog(items: Item[], pl: Record<string, PlCache> = {}) {
   return { books, notices, playlists, courses: [...courseMap.values()] };
 }
 
+/** the Gemini key comes from the newest `#key` post in the channel (none = no key) */
+function applyKey(items: Item[]) {
+  const k = items.flatMap((i) => (i.kind === 'key' ? [i] : [])).sort((a, b) => b.date - a.date || b.id - a.id)[0]?.key ?? '';
+  if (useBuddy.getState().apiKey !== k) useBuddy.getState().update({ apiKey: k });
+}
+
 interface CatalogState {
   books: Book[];
   courses: Course[];
@@ -109,6 +116,7 @@ export const useCatalog = create<CatalogState>((set, get) => ({
   loadCache: async () => {
     const lastSync = await getMeta<number>('lastSyncAt');
     const items = await getAllItems();
+    applyKey(items);
     set({ ...buildCatalog(items, await readPlaylists(items)), lastSync });
   },
 
@@ -120,6 +128,7 @@ export const useCatalog = create<CatalogState>((set, get) => ({
       const lastSync = Date.now();
       await setMeta('lastSyncAt', lastSync);
       const items = await getAllItems();
+      applyKey(items);
       const plErr = await refreshPlaylists(items);
       set({ ...buildCatalog(items, await readPlaylists(items)), syncing: false, lastSync, error: plErr });
     } catch (e) {
