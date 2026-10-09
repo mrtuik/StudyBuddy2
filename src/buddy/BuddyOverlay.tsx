@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ChevronsRight, Eye, EyeOff, KeyRound, Mic, MicOff, Power, X } from 'lucide-react';
+import { ChevronsRight, Eye, EyeOff, KeyRound, Mic, MicOff, X } from 'lucide-react';
 import { useBuddy, type Gender } from '../store/buddy';
 import { buddyLevel, buddyStart, buddyStop, buddyWatch } from './engine';
 import { screenCaptureAvailable } from './screen';
@@ -85,7 +85,7 @@ export default function BuddyOverlay() {
       }}
     >
       {b.caption && (
-        <div className="absolute bottom-full right-0 mb-1.5 rounded-2xl rounded-br-sm bg-white/95 px-3 py-2 text-[12.5px] font-medium leading-snug text-black shadow-lg" style={{ width: 'max-content', maxWidth: 'min(250px, calc(100vw - 24px))', marginBottom: ctl && !b.peek && b.bottom < 70 ? 66 : undefined }}>
+        <div className="absolute bottom-full right-0 mb-1.5 rounded-2xl rounded-br-sm bg-white/95 px-3 py-2 text-[12.5px] font-medium leading-snug text-black shadow-lg" style={{ width: 'max-content', maxWidth: 'min(250px, calc(100vw - 24px))' }}>
           {b.caption}
         </div>
       )}
@@ -104,25 +104,21 @@ export default function BuddyOverlay() {
         )}
         {b.status === 'connecting' && <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold text-white/80">Waking up…</div>}
         {!ctl && <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white">Buddy</div>}
-      </div>
-      {/* controls: their own black square card, icons evenly spaced; sits under the window (above it when the window is near the bottom) */}
-      {ctl && !b.peek && (
-        <div
-          className={`absolute inset-x-0 flex items-center justify-evenly rounded-2xl border border-white/15 bg-black px-2 py-2 shadow-xl shadow-black/60 ${b.bottom < 70 ? 'bottom-full mb-2' : 'top-full mt-2'}`}
-          onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}
-        >
-          <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-10 w-10 items-center justify-center rounded-xl text-white" aria-label="Mute">
-            {b.muted ? <MicOff size={22} className="text-red-400" /> : <Mic size={22} />}
-          </button>
-          {screenCaptureAvailable() && (
-            <button onClick={toggleWatch} className="press flex h-10 w-10 items-center justify-center rounded-xl text-white" aria-label="Watch my screen">
-              {b.watching ? <Eye size={22} className="text-green-400" /> : <EyeOff size={22} />}
+        {ctl && !b.peek && (
+          <div className="absolute inset-x-0 bottom-0 flex h-8 items-center justify-evenly bg-black/65 px-2 backdrop-blur-sm" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+            <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-7 w-7 items-center justify-center text-white" aria-label="Mute">
+              {b.muted ? <MicOff size={16} className="text-red-400" /> : <Mic size={16} />}
             </button>
-          )}
-          <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-10 w-10 items-center justify-center rounded-xl text-white" aria-label="Move aside"><ChevronsRight size={22} /></button>
-          <button onClick={() => buddyStop()} className="press flex h-10 w-10 items-center justify-center rounded-xl text-red-500" aria-label="End"><Power size={22} strokeWidth={2.6} /></button>
-        </div>
-      )}
+            {screenCaptureAvailable() && (
+              <button onClick={toggleWatch} className="press flex h-7 w-7 items-center justify-center text-white" aria-label="Watch my screen">
+                {b.watching ? <Eye size={16} className="text-green-400" /> : <EyeOff size={16} />}
+              </button>
+            )}
+            <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-7 w-7 items-center justify-center text-white" aria-label="Move aside"><ChevronsRight size={16} /></button>
+            <button onClick={() => buddyStop()} className="press flex h-7 w-7 items-center justify-center text-white" aria-label="Close"><X size={17} /></button>
+          </div>
+        )}
+      </div>
     </div>
   );
 

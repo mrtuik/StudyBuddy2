@@ -89,7 +89,7 @@ export async function buddyStart() {
   }
 
   sess = new BuddySession({
-    onOpen: () => { useBuddy.getState().set({ status: 'live' }); useBuddy.getState().doGesture('wave'); },
+    onOpen: () => { useBuddy.getState().set({ status: 'live' }); useBuddy.getState().doGesture('wave'); if (screenCaptureAvailable()) buddyWatch(true); },  // screen watching is on by default
     onClose: (reason, error) => {
       const bad = /model|not found|404|unsupported|not supported/i.test(reason);
       const key = /api key|permission|401|403|invalid/i.test(reason);
