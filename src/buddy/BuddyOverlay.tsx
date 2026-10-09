@@ -105,17 +105,17 @@ export default function BuddyOverlay() {
         {b.status === 'connecting' && <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold text-white/80">Waking up…</div>}
         {!ctl && <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white">Buddy</div>}
         {ctl && !b.peek && (
-          <div className="absolute inset-x-0 bottom-0 flex justify-center gap-1.5 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-6" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur" aria-label="Mute">
-              {b.muted ? <MicOff size={16} className="text-red-400" /> : <Mic size={16} />}
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-around px-3 pb-3" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
+            <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-9 w-9 items-center justify-center text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="Mute">
+              {b.muted ? <MicOff size={24} className="text-red-400" /> : <Mic size={24} />}
             </button>
             {screenCaptureAvailable() && (
-              <button onClick={toggleWatch} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur" aria-label="Watch my screen">
-                {b.watching ? <Eye size={15} className="text-green-400" /> : <EyeOff size={15} />}
+              <button onClick={toggleWatch} className="press flex h-9 w-9 items-center justify-center text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="Watch my screen">
+                {b.watching ? <Eye size={24} className="text-green-400" /> : <EyeOff size={24} />}
               </button>
             )}
-            <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur" aria-label="Move aside"><ChevronsRight size={17} /></button>
-            <button onClick={() => buddyStop()} className="press flex h-8 w-8 items-center justify-center rounded-full bg-red-600" aria-label="End"><Power size={16} /></button>
+            <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-9 w-9 items-center justify-center text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="Move aside"><ChevronsRight size={24} /></button>
+            <button onClick={() => buddyStop()} className="press flex h-9 w-9 items-center justify-center text-red-500" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="End"><Power size={24} strokeWidth={2.6} /></button>
           </div>
         )}
       </div>
