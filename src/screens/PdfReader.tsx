@@ -18,6 +18,7 @@ import Roadmap from '../components/Roadmap';
 
 const COLORS = ['#FACC15', '#4ADE80', '#F472B6', '#60A5FA', '#EF4444', '#111111'];
 const NONE: Stroke[] = [];
+const TRK_T = 72, TRK_B = 84, THUMB_H = 52;
 const GAP = 8, SIDE = 6, TOP = 64, BOTTOM = 120, ZMIN = 0.75, ZMAX = 4, MAXPX = 9_000_000;
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
 
@@ -274,16 +275,46 @@ export default function PdfReader() {
   }, []);
 
   const raf = useRef(0);
+
+  // ---------- fast-scroll handle: drag the thumb on the right edge to move through the whole book ----------
+  const thumb = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
+  const [dragOn, setDragOn] = useState(false);
+  const [recent, setRecent] = useState(false);
+  const recentT = useRef(0);
+  const placeThumb = useCallback(() => {
+    const s = scroller.current, t = thumb.current;
+    if (!s || !t) return;
+    const range = s.scrollHeight - s.clientHeight;
+    const trk = Math.max(1, s.clientHeight - TRK_T - TRK_B - THUMB_H);
+    const f = range > 0 ? clamp(s.scrollTop / range, 0, 1) : 0;
+    t.style.transform = `translateY(${f * trk}px)`;
+  }, []);
+  const dragTo = (clientY: number) => {
+    const s = scroller.current;
+    if (!s) return;
+    const r = s.getBoundingClientRect();
+    const trk = Math.max(1, s.clientHeight - TRK_T - TRK_B - THUMB_H);
+    const f = clamp((clientY - r.top - TRK_T - THUMB_H / 2) / trk, 0, 1);
+    s.scrollTop = f * (s.scrollHeight - s.clientHeight);
+  };
+
   const recompute = useCallback(() => {
     const s = scroller.current;
+    placeThumb();
     if (!s || !totalRef.current || !inited.current) return;
     const top = s.scrollTop, vh = s.clientHeight;
     const a = pageAt(top - vh * 0.6), b = Math.min(pageAt(top + vh * 1.6), pageAt(top - vh * 0.6) + 6);
     setVis((v) => (v.from === a && v.to === b ? v : { from: a, to: b }));
     const cur = pageAt(top + vh * 0.3);
     setPage((c) => (c === cur ? c : cur));
-  }, [pageAt]);
-  const onScroll = () => { if (raf.current) return; raf.current = requestAnimationFrame(() => { raf.current = 0; recompute(); }); };
+  }, [pageAt, placeThumb]);
+  const onScroll = () => {
+    if (!dragging.current) { setRecent(true); window.clearTimeout(recentT.current); recentT.current = window.setTimeout(() => setRecent(false), 1400); }
+    if (raf.current) return; raf.current = requestAnimationFrame(() => { raf.current = 0; recompute(); });
+  };
+
+  useLayoutEffect(() => { placeThumb(); }, [ui, recent, dragOn, ready, total, placeThumb]);
 
   // measure the viewport (also follows rotation)
   useEffect(() => {
@@ -586,16 +617,36 @@ export default function PdfReader() {
 
       {/* right edge: chapter tab + previous / next page */}
       {ui && curRow && !annotOn && (
-        <button onClick={() => setRoadmap(true)} className="absolute right-0 top-[30%] z-10 rounded-l-lg bg-card/90 px-1.5 py-3 text-[10px] font-semibold text-tint shadow"
+        <button onClick={() => setRoadmap(true)} className="absolute right-6 top-[30%] z-10 rounded-l-lg bg-card/90 px-1.5 py-3 text-[10px] font-semibold text-tint shadow"
           style={{ writingMode: 'vertical-rl', maxHeight: '28%' }}>
           <span className="block truncate">{curRow.n}. {curRow.title}</span>
         </button>
       )}
       {ui && chapBusy && !rows.length && <div className="absolute right-3 top-[70px] z-10 rounded-full bg-card/90 px-2 py-0.5 text-[10px] text-sub">{chapMsg}</div>}
       {ui && !annotOn && (
-        <div className={`absolute right-2 top-[58%] z-10 flex flex-col p-0.5 ${pill}`}>
+        <div className={`absolute right-7 top-[58%] z-10 flex flex-col p-0.5 ${pill}`}>
           <button onClick={() => go(page - 1, true)} className={tbtn(false)} aria-label="Previous page"><ChevronUp size={22} /></button>
           <button onClick={() => go(page + 1, true)} className={tbtn(false)} aria-label="Next page"><ChevronDown size={22} /></button>
+        </div>
+      )}
+
+      {/* fast-scroll handle: press and drag up/down to scrub through the whole PDF */}
+      {!annotOn && ready && total > 1 && (ui || recent || dragOn) && (
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-[11] w-0">
+          <div className="absolute right-0 w-0" style={{ top: TRK_T }}>
+            <div ref={thumb} className="pointer-events-auto absolute right-0 top-0 flex items-center justify-end" style={{ height: THUMB_H, width: 44, touchAction: 'none' }}
+              onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.setPointerCapture(e.pointerId); dragging.current = true; setDragOn(true); setRecent(true); dragTo(e.clientY); }}
+              onPointerMove={(e) => { if (dragging.current) { e.preventDefault(); dragTo(e.clientY); } }}
+              onPointerUp={() => { dragging.current = false; setDragOn(false); window.clearTimeout(recentT.current); recentT.current = window.setTimeout(() => setRecent(false), 1400); }}
+              onPointerCancel={() => { dragging.current = false; setDragOn(false); }}>
+              {dragOn && (
+                <div className="absolute right-12 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-full bg-accent px-3 py-1.5 text-sm font-bold text-white shadow-lg">{page} / {total}</div>
+              )}
+              <div className={`mr-0.5 flex h-[52px] w-[14px] items-center justify-center rounded-full shadow-lg transition-colors ${dragOn ? 'bg-accent' : 'bg-card/95 backdrop-blur'}`}>
+                <div className="flex flex-col gap-[3px]"><span className="h-px w-[6px] bg-white/60" /><span className="h-px w-[6px] bg-white/60" /><span className="h-px w-[6px] bg-white/60" /></div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

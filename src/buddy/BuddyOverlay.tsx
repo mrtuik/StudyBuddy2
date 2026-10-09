@@ -85,7 +85,7 @@ export default function BuddyOverlay() {
       }}
     >
       {b.caption && (
-        <div className="absolute bottom-full right-0 mb-1.5 rounded-2xl rounded-br-sm bg-white/95 px-3 py-2 text-[12.5px] font-medium leading-snug text-black shadow-lg" style={{ width: 'max-content', maxWidth: 'min(250px, calc(100vw - 24px))' }}>
+        <div className="absolute bottom-full right-0 mb-1.5 rounded-2xl rounded-br-sm bg-white/95 px-3 py-2 text-[12.5px] font-medium leading-snug text-black shadow-lg" style={{ width: 'max-content', maxWidth: 'min(250px, calc(100vw - 24px))', marginBottom: ctl && !b.peek && b.bottom < 70 ? 66 : undefined }}>
           {b.caption}
         </div>
       )}
@@ -104,21 +104,25 @@ export default function BuddyOverlay() {
         )}
         {b.status === 'connecting' && <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[11px] font-semibold text-white/80">Waking up…</div>}
         {!ctl && <div className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-black/55 px-2 py-0.5 text-[10px] font-semibold text-white">Buddy</div>}
-        {ctl && !b.peek && (
-          <div className="absolute inset-x-0 bottom-0 flex items-center justify-around px-3 pb-3" onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}>
-            <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-9 w-9 items-center justify-center text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="Mute">
-              {b.muted ? <MicOff size={24} className="text-red-400" /> : <Mic size={24} />}
-            </button>
-            {screenCaptureAvailable() && (
-              <button onClick={toggleWatch} className="press flex h-9 w-9 items-center justify-center text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="Watch my screen">
-                {b.watching ? <Eye size={24} className="text-green-400" /> : <EyeOff size={24} />}
-              </button>
-            )}
-            <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-9 w-9 items-center justify-center text-white" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="Move aside"><ChevronsRight size={24} /></button>
-            <button onClick={() => buddyStop()} className="press flex h-9 w-9 items-center justify-center text-red-500" style={{ filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.95))' }} aria-label="End"><Power size={24} strokeWidth={2.6} /></button>
-          </div>
-        )}
       </div>
+      {/* controls: their own black square card, icons evenly spaced; sits under the window (above it when the window is near the bottom) */}
+      {ctl && !b.peek && (
+        <div
+          className={`absolute inset-x-0 flex items-center justify-evenly rounded-2xl border border-white/15 bg-black px-2 py-2 shadow-xl shadow-black/60 ${b.bottom < 70 ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+          onPointerDown={(e) => e.stopPropagation()} onPointerUp={(e) => e.stopPropagation()}
+        >
+          <button onClick={() => b.set({ muted: !b.muted })} className="press flex h-10 w-10 items-center justify-center rounded-xl text-white" aria-label="Mute">
+            {b.muted ? <MicOff size={22} className="text-red-400" /> : <Mic size={22} />}
+          </button>
+          {screenCaptureAvailable() && (
+            <button onClick={toggleWatch} className="press flex h-10 w-10 items-center justify-center rounded-xl text-white" aria-label="Watch my screen">
+              {b.watching ? <Eye size={22} className="text-green-400" /> : <EyeOff size={22} />}
+            </button>
+          )}
+          <button onClick={() => { b.set({ peek: true }); setCtl(false); }} className="press flex h-10 w-10 items-center justify-center rounded-xl text-white" aria-label="Move aside"><ChevronsRight size={22} /></button>
+          <button onClick={() => buddyStop()} className="press flex h-10 w-10 items-center justify-center rounded-xl text-red-500" aria-label="End"><Power size={22} strokeWidth={2.6} /></button>
+        </div>
+      )}
     </div>
   );
 

@@ -134,7 +134,7 @@ export async function buddyStart() {
       model: s.model.trim(),
       voice: s.voice,
       instruction: buildInstruction({ name: s.name, gender: s.gender, age: s.age, lang: s.lang, roast: s.roast, notes: mem.pick(40).map((n) => n.text), total: mem.notes.length, sessions: mem.sessions, lastSeen: mem.lastSeen }),
-      hello: `The session just started. Greet ${s.name} now, in ${langName(s.lang)}.`,
+      hello: `The session just started. Greet ${s.name} now in ${langName(s.lang)}, short and casual like a friend, not like an announcement.`,
     });
   } catch (e) {
     fail(/key|403|401|permission/i.test(String(e)) ? 'Gemini rejected the API key. Check the #key post in your channel.' : `Could not connect: ${String((e as Error)?.message ?? e).slice(0, 120)}`);
